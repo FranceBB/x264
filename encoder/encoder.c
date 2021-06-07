@@ -3689,7 +3689,7 @@ int     x264_encoder_encode( x264_t *h,
                 int total_len = 256;
                 /* Sony XAVC uses an oversized PPS instead of SEI padding */
                 if( h->param.i_avcintra_flavor == X264_AVCINTRA_FLAVOR_SONY )
-                    total_len += h->param.i_height == 1080 ? 18*512 : 10*512;
+                    total_len += h->param.i_height >= 1080 ? 18*512 : 10*512;
                 h->out.nal[h->out.i_nal-1].i_padding = total_len - h->out.nal[h->out.i_nal-1].i_payload - NALU_OVERHEAD;
             }
             overhead += h->out.nal[h->out.i_nal-1].i_payload + h->out.nal[h->out.i_nal-1].i_padding + NALU_OVERHEAD;
