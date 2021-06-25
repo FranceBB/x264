@@ -241,8 +241,8 @@ void x264_sps_init( x264_sps_t *sps, int i_id, x264_param_t *param )
         sps->vui.i_log2_max_mv_length_vertical = (int)log2f( X264_MAX( 1, param->analyse.i_mv_range*4-1 ) ) + 1;
     }
 
-    sps->b_avcintra_4k =  param->i_avcintra_class > 200;
-    sps->b_avcintra_hd =  !!(param->i_avcintra_class && param->i_avcintra_class < 300);
+    sps->b_avcintra_hd = param->i_avcintra_class && param->i_avcintra_class <= 200;
+    sps->b_avcintra_4k = param->i_avcintra_class > 200;
     sps->i_cqm_preset = param->i_cqm_preset;
 }
 
