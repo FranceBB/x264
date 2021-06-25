@@ -206,8 +206,8 @@ static void slice_header_init( x264_t *h, x264_slice_header_t *sh,
         sh->i_disable_deblocking_filter_idc = param->b_sliced_threads ? 2 : 0;
     else
         sh->i_disable_deblocking_filter_idc = 1;
-    sh->i_alpha_c0_offset = param->i_deblocking_filter_alphac0 << 1;
-    sh->i_beta_offset = param->i_deblocking_filter_beta << 1;
+    sh->i_alpha_c0_offset = param->i_deblocking_filter_alphac0 * 2;
+    sh->i_beta_offset = param->i_deblocking_filter_beta * 2;
 }
 
 static void slice_header_write( bs_t *s, x264_slice_header_t *sh, int i_nal_ref_idc )
@@ -729,7 +729,7 @@ static int validate_parameters( x264_t *h, int b_open )
         }
         else if( type > 2 && h->param.i_avcintra_flavor != X264_AVCINTRA_FLAVOR_SONY )
         {
-            x264_log( h, X264_LOG_ERROR, "Class %d only supported by Sony XAVC flavor\n", h->param.i_avcintra_class );
+            x264_log( h, X264_LOG_ERROR, "AVC-Intra %d only supported by Sony XAVC flavor\n", h->param.i_avcintra_class );
             return -1;
         }
 
@@ -743,7 +743,7 @@ static int validate_parameters( x264_t *h, int b_open )
             const uint8_t *cqm_4iy;
             const uint8_t *cqm_4ic;
             const uint8_t *cqm_8iy;
-        } avcintra_lut[5][2][8] =
+        } avcintra_lut[5][2][7] =
         {
             {{{ 60000, 1001, 0,   912, x264_cqm_jvt4i, x264_cqm_avci50_4ic, x264_cqm_avci50_p_8iy },
               {    50,    1, 0,  1100, x264_cqm_jvt4i, x264_cqm_avci50_4ic, x264_cqm_avci50_p_8iy },
@@ -757,11 +757,11 @@ static int validate_parameters( x264_t *h, int b_open )
               {    50,    1, 0,  2196, x264_cqm_jvt4i, x264_cqm_avci50_4ic, x264_cqm_avci50_p_8iy },
               {    25,    1, 0,  2196, x264_cqm_jvt4i, x264_cqm_avci50_4ic, x264_cqm_avci50_p_8iy },
               { 24000, 1001, 0,  1820, x264_cqm_jvt4i, x264_cqm_avci50_4ic, x264_cqm_avci50_p_8iy }}},
-            {{{ 60000, 1001, 0,  1848, x264_cqm_jvt4i, x264_cqm_avci100_720p_4ic, x264_cqm_avci100_720p_8iy },
-              {    50,    1, 0,  2224, x264_cqm_jvt4i, x264_cqm_avci100_720p_4ic, x264_cqm_avci100_720p_8iy },
-              { 30000, 1001, 0,  1848, x264_cqm_jvt4i, x264_cqm_avci100_720p_4ic, x264_cqm_avci100_720p_8iy },
-              {    25,    1, 0,  2224, x264_cqm_jvt4i, x264_cqm_avci100_720p_4ic, x264_cqm_avci100_720p_8iy },
-              { 24000, 1001, 0,  1848, x264_cqm_jvt4i, x264_cqm_avci100_720p_4ic, x264_cqm_avci100_720p_8iy }},
+            {{{ 60000, 1001, 0,  1848, x264_cqm_jvt4i, x264_cqm_avci100_720p_4ic, x264_cqm_avci100_720p_8iy  },
+              {    50,    1, 0,  2224, x264_cqm_jvt4i, x264_cqm_avci100_720p_4ic, x264_cqm_avci100_720p_8iy  },
+              { 30000, 1001, 0,  1848, x264_cqm_jvt4i, x264_cqm_avci100_720p_4ic, x264_cqm_avci100_720p_8iy  },
+              {    25,    1, 0,  2224, x264_cqm_jvt4i, x264_cqm_avci100_720p_4ic, x264_cqm_avci100_720p_8iy  },
+              { 24000, 1001, 0,  1848, x264_cqm_jvt4i, x264_cqm_avci100_720p_4ic, x264_cqm_avci100_720p_8iy  }},
              {{ 30000, 1001, 1,  3692, x264_cqm_jvt4i, x264_cqm_avci100_1080_4ic, x264_cqm_avci100_1080i_8iy },
               {    25,    1, 1,  4444, x264_cqm_jvt4i, x264_cqm_avci100_1080_4ic, x264_cqm_avci100_1080i_8iy },
               { 60000, 1001, 0,  3692, x264_cqm_jvt4i, x264_cqm_avci100_1080_4ic, x264_cqm_avci100_1080p_8iy },
@@ -793,17 +793,22 @@ static int validate_parameters( x264_t *h, int b_open )
         int res = -1;
         if( i_csp >= X264_CSP_I420 && i_csp < X264_CSP_I422 && !type )
         {
-            if(      h->param.i_width == 1440 && h->param.i_height == 1080 ) res =  1;
-            else if( h->param.i_width ==  960 && h->param.i_height ==  720 ) res =  0;
+            if(      h->param.i_width == 1440 && h->param.i_height == 1080 ) res = 1;
+            else if( h->param.i_width ==  960 && h->param.i_height ==  720 ) res = 0;
         }
-        else if( i_csp >= X264_CSP_I422 && i_csp < X264_CSP_I444 )
+        else if( i_csp >= X264_CSP_I422 && i_csp < X264_CSP_I444 && type )
         {
             if( type < 3 )
             {
-                if(      h->param.i_width == 1920 && h->param.i_height == 1080 ) res =  1;
-                else if( h->param.i_width == 1280 && h->param.i_height ==  720 ) res =  0;
+                if(      h->param.i_width == 1920 && h->param.i_height == 1080 ) res = 1;
+                else if( h->param.i_width == 2048 && h->param.i_height == 1080 ) res = 1;
+                else if( h->param.i_width == 1280 && h->param.i_height ==  720 ) res = 0;
             }
-            else if( h->param.i_width == 3840  && h->param.i_height == 2160 ) res =  0;
+            else
+            {
+                if(      h->param.i_width == 3840 && h->param.i_height == 2160 ) res = 0;
+                else if( h->param.i_width == 4096 && h->param.i_height == 2160 ) res = 0;
+            }
         }
         else
         {
@@ -844,8 +849,8 @@ static int validate_parameters( x264_t *h, int b_open )
         }
         if( i == 7 )
         {
-            x264_log( h, X264_LOG_ERROR, "FPS %d/%d%c not compatible with AVC-Intra\n",
-                      h->param.i_fps_num, h->param.i_fps_den, PARAM_INTERLACED ? 'i' : 'p' );
+            x264_log( h, X264_LOG_ERROR, "FPS %d/%d%c not compatible with AVC-Intra %d\n",
+                      h->param.i_fps_num, h->param.i_fps_den, PARAM_INTERLACED ? 'i' : 'p', h->param.i_avcintra_class );
             return -1;
         }
 
@@ -865,7 +870,7 @@ static int validate_parameters( x264_t *h, int b_open )
         h->param.b_pic_struct = 0;
         h->param.analyse.b_transform_8x8 = 1;
         h->param.analyse.intra = X264_ANALYSE_I8x8;
-        h->param.analyse.i_chroma_qp_offset =  type > 2 ? -4 : res && type ? 3 : 4;
+        h->param.analyse.i_chroma_qp_offset = type > 2 ? -4 : res && type ? 3 : 4;
         h->param.b_cabac = !type;
         h->param.rc.i_vbv_buffer_size = avcintra_lut[type][res][i].frame_size;
         h->param.rc.i_vbv_max_bitrate =
@@ -1566,10 +1571,8 @@ x264_t *x264_encoder_open( x264_param_t *param, void *api )
     h->i_frame = -1;
     h->i_frame_num = 0;
 
-    if( h->param.i_avcintra_class > 200 )
-        h->i_idr_pic_id = 4;
-    else if( h->param.i_avcintra_class )
-        h->i_idr_pic_id = 5;
+    if( h->param.i_avcintra_class )
+        h->i_idr_pic_id = h->param.i_avcintra_class > 200 ? 4 : 5;
     else
         h->i_idr_pic_id = 0;
 
