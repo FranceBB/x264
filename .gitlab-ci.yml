@@ -22,7 +22,7 @@ stages:
 .variables-win64: &variables-win64
     _TRIPLET: "x86_64-w64-mingw32"
     _PLATFORMSUFFIX: ".exe"
-    _WRAPPER: "wine64"
+    _WRAPPER: "wine"
     _CONTRIB_URL: "https://artifacts.videolan.org/vlc/win64/"
 
 .variables-win-armv7: &variables-win-armv7
@@ -83,7 +83,7 @@ stages:
 
 build-debian-amd64:
     extends: .build
-    image: registry.videolan.org/x264-debian-unstable:20211206140856
+    image: registry.videolan.org/x264-debian-unstable:20231113190916
     tags:
         - docker
         - amd64
@@ -224,6 +224,20 @@ test-macos-x86_64:
     dependencies:
         - build-macos-x86_64
     variables: *variables-macos-x86_64
+
+test-aarch64-qemu:
+    <<: *test
+    extends: build-debian-amd64
+    dependencies:
+        - build-debian-aarch64
+    variables: *variables-debian-amd64
+    script: |
+        set -x
+        for size in 128 256 512 1024 2048; do
+            for tool in checkasm8 checkasm10; do
+                qemu-aarch64 -cpu max,sve-default-vector-length=256,sve$size=on -L /usr/aarch64-linux-gnu ./$tool
+            done
+        done
 
 .release: &release
     stage: release

@@ -117,6 +117,9 @@ static inline uint32_t read_time(void)
     a = b;
 #elif ARCH_MIPS
     asm volatile( "rdhwr %0, $2" : "=r"(a) :: "memory" );
+#elif ARCH_LOONGARCH
+    uint32_t id = 0;
+    asm volatile( "rdtimel.w  %0, %1" : "=r"(a), "=r"(id) :: "memory" );
 #endif
     return a;
 }
@@ -211,10 +214,15 @@ static void print_bench(void)
                     b->cpu&X264_CPU_NEON ? "neon" :
                     b->cpu&X264_CPU_ARMV6 ? "armv6" :
 #elif ARCH_AARCH64
+                    b->cpu&X264_CPU_SVE2 ? "sve2" :
+                    b->cpu&X264_CPU_SVE ? "sve" :
                     b->cpu&X264_CPU_NEON ? "neon" :
                     b->cpu&X264_CPU_ARMV8 ? "armv8" :
 #elif ARCH_MIPS
                     b->cpu&X264_CPU_MSA ? "msa" :
+#elif ARCH_LOONGARCH
+                    b->cpu&X264_CPU_LASX ? "lasx" :
+                    b->cpu&X264_CPU_LSX ? "lsx" :
 #endif
                     "c",
 #if ARCH_X86 || ARCH_X86_64
@@ -254,6 +262,10 @@ intptr_t x264_checkasm_call( intptr_t (*func)(), int *ok, ... );
 
 #if HAVE_AARCH64
 intptr_t x264_checkasm_call( intptr_t (*func)(), int *ok, ... );
+
+#if HAVE_SVE
+int x264_checkasm_sve_length( void );
+#endif
 #endif
 
 #if HAVE_ARMV6
@@ -2880,6 +2892,9 @@ static int check_all_flags( void )
         simd_warmup_func = x264_checkasm_warmup_avx;
 #endif
     simd_warmup();
+#if ARCH_AARCH64 && HAVE_SVE
+    char buf[20];
+#endif
 
 #if ARCH_X86 || ARCH_X86_64
     if( cpu_detect & X264_CPU_MMX2 )
@@ -2973,9 +2988,24 @@ static int check_all_flags( void )
         ret |= add_flags( &cpu0, &cpu1, X264_CPU_ARMV8, "ARMv8" );
     if( cpu_detect & X264_CPU_NEON )
         ret |= add_flags( &cpu0, &cpu1, X264_CPU_NEON, "NEON" );
+#if HAVE_SVE
+    if( cpu_detect & X264_CPU_SVE ) {
+        snprintf( buf, sizeof( buf ), "SVE (%d bits)", x264_checkasm_sve_length() );
+        ret |= add_flags( &cpu0, &cpu1, X264_CPU_SVE, buf );
+    }
+    if( cpu_detect & X264_CPU_SVE2 ) {
+        snprintf( buf, sizeof( buf ), "SVE2 (%d bits)", x264_checkasm_sve_length() );
+        ret |= add_flags( &cpu0, &cpu1, X264_CPU_SVE2, buf );
+    }
+#endif
 #elif ARCH_MIPS
     if( cpu_detect & X264_CPU_MSA )
         ret |= add_flags( &cpu0, &cpu1, X264_CPU_MSA, "MSA" );
+#elif ARCH_LOONGARCH
+    if( cpu_detect & X264_CPU_LSX )
+        ret |= add_flags( &cpu0, &cpu1, X264_CPU_LSX, "LSX" );
+    if( cpu_detect & X264_CPU_LASX )
+        ret |= add_flags( &cpu0, &cpu1, X264_CPU_LASX, "LASX" );
 #endif
     return ret;
 }
@@ -2989,7 +3019,7 @@ REALIGN_STACK int main( int argc, char **argv )
 
     if( argc > 1 && !strncmp( argv[1], "--bench", 7 ) )
     {
-#if !ARCH_X86 && !ARCH_X86_64 && !ARCH_PPC && !ARCH_ARM && !ARCH_AARCH64 && !ARCH_MIPS
+#if !ARCH_X86 && !ARCH_X86_64 && !ARCH_PPC && !ARCH_ARM && !ARCH_AARCH64 && !ARCH_MIPS && !ARCH_LOONGARCH
         fprintf( stderr, "no --bench for your cpu until you port rdtsc\n" );
         return 1;
 #endif

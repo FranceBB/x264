@@ -177,9 +177,15 @@ typedef struct x264_nal_t
 #define X264_CPU_NEON            0x0000002U  /* ARM NEON */
 #define X264_CPU_FAST_NEON_MRC   0x0000004U  /* Transfer from NEON to ARM register is fast (Cortex-A9) */
 #define X264_CPU_ARMV8           0x0000008U
+#define X264_CPU_SVE             0x0000010U  /* AArch64 SVE */
+#define X264_CPU_SVE2            0x0000020U  /* AArch64 SVE2 */
 
 /* MIPS */
 #define X264_CPU_MSA             0x0000001U  /* MIPS MSA */
+
+/* LOONGARCH */
+#define X264_CPU_LSX             0x0000001U  /* LOONGARCH LSX */
+#define X264_CPU_LASX            0x0000002U  /* LOONGARCH LASX */
 
 /* Analyse flags */
 #define X264_ANALYSE_I4x4       0x0001U  /* Analyse i4x4 */
