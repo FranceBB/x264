@@ -1,7 +1,7 @@
 /*****************************************************************************
  * deblock.c: deblocking
  *****************************************************************************
- * Copyright (C) 2003-2023 x264 project
+ * Copyright (C) 2003-2024 x264 project
  *
  * Authors: Laurent Aimar <fenrir@via.ecp.fr>
  *          Loren Merritt <lorenm@u.washington.edu>
@@ -803,6 +803,12 @@ void x264_deblock_init( uint32_t cpu, x264_deblock_function_t *pf, int b_mbaff )
         pf->deblock_luma_intra[1] = x264_deblock_v_luma_intra_neon;
         pf->deblock_strength     = x264_deblock_strength_neon;
     }
+#if HAVE_SVE
+    if ( cpu&X264_CPU_SVE )
+    {
+        pf->deblock_chroma[1] = x264_deblock_v_chroma_sve;
+    }
+#endif
 #endif
 
 #if HAVE_MSA

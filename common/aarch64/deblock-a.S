@@ -1,7 +1,7 @@
 /*****************************************************************************
  * deblock.S: aarch64 deblocking
  *****************************************************************************
- * Copyright (C) 2009-2023 x264 project
+ * Copyright (C) 2009-2024 x264 project
  *
  * Authors: Mans Rullgard <mans@mansr.com>
  *          Janne Grunau <janne-x264@jannau.net>
@@ -25,20 +25,7 @@
  *****************************************************************************/
 
 #include "asm.S"
-
-.macro h264_loop_filter_start
-    cmp             w2,  #0
-    ldr             w6,  [x4]
-    ccmp            w3,  #0, #0, ne
-    mov             v24.s[0], w6
-    and             w8,  w6,  w6,  lsl #16
-    b.eq            1f
-    ands            w8,  w8,  w8,  lsl #8
-    b.ge            2f
-1:
-    ret
-2:
-.endm
+#include "deblock-a-common.S"
 
 .macro h264_loop_filter_luma
     dup             v22.16b, w2                     // alpha

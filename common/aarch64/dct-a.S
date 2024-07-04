@@ -1,7 +1,7 @@
 /****************************************************************************
  * dct-a.S: aarch64 transform and zigzag
  *****************************************************************************
- * Copyright (C) 2009-2023 x264 project
+ * Copyright (C) 2009-2024 x264 project
  *
  * Authors: David Conrad <lessen42@gmail.com>
  *          Janne Grunau <janne-x264@jannau.net>
@@ -25,6 +25,7 @@
  *****************************************************************************/
 
 #include "asm.S"
+#include "dct-a-common.S"
 
 const scan4x4_frame, align=4
 .byte    0,1,   8,9,   2,3,   4,5
@@ -119,17 +120,6 @@ function idct4x4dc_neon, export=1
     st1         {v0.4h,v1.4h,v2.4h,v3.4h}, [x0]
     ret
 endfunc
-
-.macro DCT_1D v0 v1 v2 v3 v4 v5 v6 v7
-    SUMSUB_AB   \v1, \v6, \v5, \v6
-    SUMSUB_AB   \v3, \v7, \v4, \v7
-    add         \v0, \v3, \v1
-    add         \v4, \v7, \v7
-    add         \v5, \v6, \v6
-    sub         \v2, \v3, \v1
-    add         \v1, \v4, \v6
-    sub         \v3, \v7, \v5
-.endm
 
 function sub4x4_dct_neon, export=1
     mov         x3, #FENC_STRIDE
