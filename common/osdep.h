@@ -1,7 +1,7 @@
 /*****************************************************************************
  * osdep.h: platform-specific code
  *****************************************************************************
- * Copyright (C) 2007-2024 x264 project
+ * Copyright (C) 2007-2025 x264 project
  *
  * Authors: Loren Merritt <lorenm@u.washington.edu>
  *          Laurent Aimar <fenrir@via.ecp.fr>
@@ -434,7 +434,7 @@ X264_API int x264_threading_init( void );
 static ALWAYS_INLINE int x264_pthread_fetch_and_add( int *val, int add, x264_pthread_mutex_t *mutex )
 {
 #if HAVE_THREAD
-#if defined(__GNUC__) && (__GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ > 0) && (ARCH_X86 || ARCH_X86_64)
+#if defined(__GNUC__) && (__GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ > 0) && HAVE_SYNC_FETCH_AND_ADD
     return __sync_fetch_and_add( val, add );
 #else
     x264_pthread_mutex_lock( mutex );
